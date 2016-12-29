@@ -1,7 +1,7 @@
 package com.example.max.instamap;
 
-import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
+import android.support.v4.app.FragmentActivity;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -37,10 +37,34 @@ public class Main extends FragmentActivity implements OnMapReadyCallback {
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
+        LatLng manhattan = new LatLng(40.783060, -73.971249);
+        for (int i=0; i<LIST_LOCATIONS.length; i++){
+            mMap.addMarker(new MarkerOptions().position(LIST_LOCATIONS[i].location)
+                    .title((LIST_LOCATIONS[i].name))
+                    );
+        }
+        mMap.moveCamera(CameraUpdateFactory.newLatLng(manhattan));
 
-        // Add a marker in Sydney and move the camera
-        LatLng sydney = new LatLng(-34, 151);
-        mMap.addMarker(new MarkerOptions().position(sydney).title("Marker in Sydney"));
-        mMap.moveCamera(CameraUpdateFactory.newLatLng(sydney));
+       // mMap.addMarker(new MarkerOptions().position(manhattan).title("Marker in Sydney"));
     }
+
+
+    private static class NamedLocation {
+
+        public final String name;
+        public final LatLng location;
+
+        NamedLocation(String name, LatLng location) {
+            this.name = name;
+            this.location = location;
+        }
+    }
+    private static final NamedLocation[] LIST_LOCATIONS = new NamedLocation[]{
+            new NamedLocation("Brooklyn Bridge", new LatLng(40.706086, -73.996864)),
+            new NamedLocation("Times Square", new LatLng(40.7583595, -73.9864889)),
+            new NamedLocation("Staten Island Ferry", new LatLng(40.6719458, -74.0424948)),
+            new NamedLocation("Koneko Cat Cafe", new LatLng(40.7204578, -73.9841388)),
+            new NamedLocation("Occulus WTC", new LatLng(40.71137299999999, -74.01227299999999)),
+            new NamedLocation("Driftwood Martial Arts", new LatLng(43.42177299999999, -80.55811799999999)),
+    };
 }
