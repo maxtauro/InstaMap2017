@@ -47,7 +47,7 @@ public class Main extends FragmentActivity implements
             new NamedLocation("Staten Island Ferry", new LatLng(40.6719458, -74.0424948)),
             new NamedLocation("Koneko Cat Cafe", new LatLng(40.7204578, -73.9841388)),
             new NamedLocation("Oculus WTC", new LatLng(40.71137299999999, -74.01227299999999)),
-            new NamedLocation("Driftwood Martial Arts", new LatLng(43.42177299999999, -80.55811799999999)),
+            //new NamedLocation("Driftwood Martial Arts", new LatLng(43.42177299999999, -80.55811799999999)),
     };
 
     private static final int[] ImageID = new int[]{
@@ -56,7 +56,7 @@ public class Main extends FragmentActivity implements
             R.drawable.staten_ferry,
             R.drawable.koneko,
             R.drawable.oculus_wtc,
-            0,
+            //0,
     };
 
 
@@ -74,15 +74,6 @@ public class Main extends FragmentActivity implements
     }
 
 
-    /**
-     * Manipulates the map once available.
-     * This callback is triggered when the map is ready to be used.
-     * This is where we can add markers or lines, add listeners or move the camera. In this case,
-     * we just add a marker near Sydney, Australia.
-     * If Google Play services is not installed on the device, the user will be prompted to install
-     * it inside the SupportMapFragment. This method will only be triggered once the user has
-     * installed Google Play services and returned to the app.
-     */
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
@@ -108,14 +99,8 @@ public class Main extends FragmentActivity implements
                 @SuppressLint("NewApi") // We check which build version we are using.
                 @Override
                 public void onGlobalLayout() {
-                    /*LatLngBounds bounds = new LatLngBounds.Builder()
-                            .include(LIST_LOCATIONS[0].location)
-                            .include(LIST_LOCATIONS[1].location)
-                            .include(LIST_LOCATIONS[2].location)
-                            .include(LIST_LOCATIONS[3].location)
-                            .include(LIST_LOCATIONS[4].location)
-                            .include(LIST_LOCATIONS[5].location)
-                            .build();*/
+                    // learneds how to make bounds this way from
+                    // https://stackoverflow.com/questions/14636118/android-set-goolgemap-bounds-from-from-database-of-points
                     bounds = new LatLngBounds.Builder();
                     for (int i = 0; i < LIST_LOCATIONS.length; i++) {
                         bounds.include(LIST_LOCATIONS[i].location);
