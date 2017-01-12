@@ -2,11 +2,13 @@ package com.example.max.instamap;
 
 import android.annotation.SuppressLint;
 import android.graphics.Color;
+import android.graphics.Point;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
 import android.text.SpannableString;
 import android.text.style.ForegroundColorSpan;
+import android.view.Display;
 import android.view.View;
 import android.view.ViewTreeObserver;
 import android.widget.ImageView;
@@ -75,7 +77,8 @@ public class Main extends FragmentActivity implements
             }
             ImageView imgView = (ImageView) view.findViewById(R.id.badge);
             imgView.setImageResource(badge);
-            imgView.getLayoutParams().width = 150;
+            ScreenResolution screenRes = deviceDimensions();
+            imgView.getLayoutParams().width = (screenRes.width)/3;
             //((ImageView) view.findViewById(R.id.badge)).setImageResource(badge);  this works
             String title = marker.getTitle();
             TextView titleUi = ((TextView) view.findViewById(R.id.title));
@@ -136,7 +139,31 @@ public class Main extends FragmentActivity implements
             R.drawable.oculus_wtc,
             //0,
     };*/
-
+    private class ScreenResolution {
+        int width;
+        int height;
+        public ScreenResolution(int width, int height) {
+            this.width = width;
+            this.height = height;
+        }
+    }
+    @SuppressLint("NewApi")
+    @SuppressWarnings("deprecation")
+    ScreenResolution deviceDimensions() {
+        int currentapiVersion = android.os.Build.VERSION.SDK_INT;
+        // getsize() is available from API 13
+        if (currentapiVersion >= android.os.Build.VERSION_CODES.HONEYCOMB_MR2) {
+            Display display = getWindowManager().getDefaultDisplay();
+            Point size = new Point();
+            display.getSize(size);
+            return new ScreenResolution(size.x, size.y);
+        }
+        else {
+            Display display = getWindowManager().getDefaultDisplay();
+            // getWidth() & getHeight() are deprecated
+            return new ScreenResolution(display.getWidth(), display.getHeight());
+        }
+    }
 
     private GoogleMap mMap;
 
