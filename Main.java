@@ -13,7 +13,6 @@ import android.view.Display;
 import android.view.View;
 import android.view.ViewTreeObserver;
 import android.widget.ImageView;
-import android.widget.SeekBar;
 import android.widget.TextView;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -44,19 +43,14 @@ public class Main extends FragmentActivity implements
 
         OnMapReadyCallback, OnInfoWindowClickListener {
 
-    // Note: Your consumer key and secret should be obfuscated in your source code before shipping.
+    // Note: Consumer key and secret should be obfuscated in your source code before shipping.
     private static final String TWITTER_KEY = "KxWYzFPPDQMWAvZyvZTV9E1hO";
     private static final String TWITTER_SECRET = "ZFsoz9V8OO3M2RCNY1UNe7IsIc9vr1ZSvBMAvXmyNAXEyMvCqq";
 
     private LatLngBounds.Builder bounds;
-    private SeekBar mRotationBar;
-
-
 
     @Override
-    public void onInfoWindowClick(Marker marker) {
-
-    }
+    public void onInfoWindowClick(Marker marker) {}
 
     /** Demonstrates customizing the info window and/or its contents. */
     class CustomInfoWindowAdapter implements InfoWindowAdapter {
@@ -80,10 +74,7 @@ public class Main extends FragmentActivity implements
         @Override
         public View getInfoContents(Marker marker) {
             return null;                                // <-- dont know why i need this but i do
-            //render(marker, mContents);
-            //return mContents;
         }
-
 
         private void render(Marker marker, View view) {
             int badge=0;
@@ -149,14 +140,6 @@ public class Main extends FragmentActivity implements
             //new NamedLocation("Driftwood Martial Arts", new LatLng(43.42177299999999, -80.55811799999999), 0),
     };
 
-    /*private static final int[] ImageID = new int[]{
-            R.drawable.brooklyn_bridge,
-            R.drawable.times_square,
-            R.drawable.staten_ferry,
-            R.drawable.koneko,
-            R.drawable.oculus_wtc,
-            //0,
-    };*/
     private class ScreenResolution {
         int width;
         int height;
@@ -195,23 +178,17 @@ public class Main extends FragmentActivity implements
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
-
-
     }
-
 
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
-        LatLng manhattan = new LatLng(40.783060, -73.971249);
         addMarkersToMap();
         buildTweetList();
-
 
         // Setting an info window adapter allows us to change the both the contents and look of the
         // info window.
         mMap.setInfoWindowAdapter(new CustomInfoWindowAdapter());
-       // mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(manhattan, 10f));  <-- I dont need this since i set bounds with the markers
 
         /*// Set listeners for marker events.  See the bottom of this class for their behavior.
         mMap.setOnMarkerClickListener(this);
@@ -257,7 +234,6 @@ public class Main extends FragmentActivity implements
     }
     public void buildTweetList() { // gets a given users tweets and builds an arraylist out of them
 
-
         final ArrayList<Tweet> tweets = new ArrayList<>();
         final UserTimeline userTimeline = new UserTimeline.Builder()
                 .screenName("matauro1")
@@ -269,7 +245,7 @@ public class Main extends FragmentActivity implements
                     //Log.d("TweetsBITCH", String.valueOf(tweet.coordinates.getLatitude()));
 
                     if(tweet.place != null){
-                        Log.d("Bounding Box", String.valueOf(tweet.place.boundingBox.coordinates.get(0).get(0).get(0)) + ", " +
+                        Log.d("Coordinates (lat/lng)",tweet.text + " " + String.valueOf(tweet.place.boundingBox.coordinates.get(0).get(0).get(0)) + ", " +
                                 String.valueOf(tweet.place.boundingBox.coordinates.get(0).get(0).get(1)));//<-- super convuluted way to get coordinates
                         // in my actual project, i should have a helper function to get  the Lat/Long
                     }
@@ -285,9 +261,5 @@ public class Main extends FragmentActivity implements
                 exception.printStackTrace();
             }
         });
-
-
     }
-
-
 }
