@@ -25,11 +25,20 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.twitter.sdk.android.Twitter;
+import com.twitter.sdk.android.core.TwitterAuthConfig;
+
+import io.fabric.sdk.android.Fabric;
 
 
 public class Main extends FragmentActivity implements
 
         OnMapReadyCallback, OnInfoWindowClickListener {
+
+    // Note: Your consumer key and secret should be obfuscated in your source code before shipping.
+    private static final String TWITTER_KEY = "KxWYzFPPDQMWAvZyvZTV9E1hO";
+    private static final String TWITTER_SECRET = "ZFsoz9V8OO3M2RCNY1UNe7IsIc9vr1ZSvBMAvXmyNAXEyMvCqq";
+
     private LatLngBounds.Builder bounds;
     private SeekBar mRotationBar;
 
@@ -170,6 +179,8 @@ public class Main extends FragmentActivity implements
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        TwitterAuthConfig authConfig = new TwitterAuthConfig(TWITTER_KEY, TWITTER_SECRET);
+        Fabric.with(this, new Twitter(authConfig));
         setContentView(R.layout.activity_main);
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
@@ -185,6 +196,7 @@ public class Main extends FragmentActivity implements
         mMap = googleMap;
         LatLng manhattan = new LatLng(40.783060, -73.971249);
         addMarkersToMap();
+
 
         // Setting an info window adapter allows us to change the both the contents and look of the
         // info window.
