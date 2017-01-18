@@ -8,6 +8,7 @@ import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
 import android.text.SpannableString;
 import android.text.style.ForegroundColorSpan;
+import android.util.Log;
 import android.view.Display;
 import android.view.View;
 import android.view.ViewTreeObserver;
@@ -26,7 +27,15 @@ import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.twitter.sdk.android.Twitter;
+import com.twitter.sdk.android.core.Callback;
+import com.twitter.sdk.android.core.Result;
 import com.twitter.sdk.android.core.TwitterAuthConfig;
+import com.twitter.sdk.android.core.TwitterException;
+import com.twitter.sdk.android.core.models.Tweet;
+import com.twitter.sdk.android.tweetui.TimelineResult;
+import com.twitter.sdk.android.tweetui.UserTimeline;
+
+import java.util.ArrayList;
 
 import io.fabric.sdk.android.Fabric;
 
@@ -196,6 +205,7 @@ public class Main extends FragmentActivity implements
         mMap = googleMap;
         LatLng manhattan = new LatLng(40.783060, -73.971249);
         addMarkersToMap();
+        buildTweetList();
 
 
         // Setting an info window adapter allows us to change the both the contents and look of the
@@ -244,6 +254,39 @@ public class Main extends FragmentActivity implements
 
             );
         }
+    }
+    public void buildTweetList() { // gets a given users tweets and builds an arraylist out of them
+
+
+        final ArrayList<Tweet> tweets = new ArrayList<>();
+        final UserTimeline userTimeline = new UserTimeline.Builder()
+                .screenName("matauro1")
+                .build();
+        userTimeline.next(null, new Callback<TimelineResult<Tweet>>() {
+            @Override
+            public void success(Result<TimelineResult<Tweet>> result) {
+                for(Tweet tweet : result.data.items){
+                    //Log.d("TweetsBITCH", String.valueOf(tweet.coordinates.getLatitude()));
+
+                    if(tweet.place != null){
+                        Log.d("Bounding Box", String.valueOf(tweet.place.boundingBox.coordinates.get(0).get(0).get(0)) + ", " +
+                                String.valueOf(tweet.place.boundingBox.coordinates.get(0).get(0).get(1)));//<-- super convuluted way to get coordinates
+                        // in my actual project, i should have a helper function to get  the Lat/Long
+                    }
+                    else{
+                        Log.d("Tweet Null"," RIP");
+                    }
+                    tweets.add(tweet);
+
+                }
+            }
+            @Override
+            public void failure(TwitterException exception) {
+                exception.printStackTrace();
+            }
+        });
+
+
     }
 
 
