@@ -47,6 +47,8 @@ public class Main extends FragmentActivity implements
     private static final String TWITTER_KEY = "KxWYzFPPDQMWAvZyvZTV9E1hO";
     private static final String TWITTER_SECRET = "ZFsoz9V8OO3M2RCNY1UNe7IsIc9vr1ZSvBMAvXmyNAXEyMvCqq";
 
+    private ArrayList<Tweet> mTweets;
+    private boolean mIsMapReady = false;
     private LatLngBounds.Builder bounds;
 
     @Override
@@ -79,9 +81,9 @@ public class Main extends FragmentActivity implements
         private void render(Marker marker, View view) {
             int badge=0;
            // badge = R.drawable.brooklyn_bridge;
-            for (int i=0;i<LIST_LOCATIONS.length;i++){ // gets the ImageID corresponding to the marker
-                if (marker.getTitle().equals(LIST_LOCATIONS[i].name)){ // be sure to use .equals
-                    badge = LIST_LOCATIONS[i].ImageID;
+            for (int i=0;i<LIST_LOCATIONS().size();i++){ // gets the ImageID corresponding to the marker
+                if (marker.getTitle().equals(LIST_LOCATIONS().get(i).name)){ // be sure to use .equals
+                    badge = LIST_LOCATIONS().get(i).ImageID;
                 }
             }
             ImageView imgView = (ImageView) view.findViewById(R.id.badge);
@@ -130,15 +132,65 @@ public class Main extends FragmentActivity implements
         }
     }
 
-    private static final NamedLocation[] LIST_LOCATIONS = new NamedLocation[]{
-            new NamedLocation("Brooklyn Bridge", new LatLng(40.706086, -73.996864),R.drawable.brooklyn_bridge,"typical Brooklyn Bridge photo"),
+    public void loadTweetList() { // gets a given users tweets and builds an arraylist out of them
+       final ArrayList<Tweet> tweets = new ArrayList<>();
+       final UserTimeline userTimeline = new UserTimeline.Builder()
+               .screenName("matauro1")
+               .build();
+       userTimeline.next(null, new Callback<TimelineResult<Tweet>>() {
+           @Override
+           public void success(Result<TimelineResult<Tweet>> result) {
+               for(Tweet tweet : result.data.items){
+                   /*if(tweet.place != null){
+                      Log.d("Coordinates",tweet.place.name+" " +  String.valueOf(getTweetLat(tweet)) + ", " +
+                               String.valueOf(getTweetLong(tweet)));
+                   }
+                   else{
+                       Log.d("Tweet Null"," RIP");
+                   }*/
+                   tweets.add(tweet);
+               }
+               mTweets = tweets;
+               Log.d("Finished Tweet List", String.valueOf(tweets));
+               if (mIsMapReady) {
+                   addMarkersToMap();
+               }
+           }
+           @Override
+           public void failure(TwitterException exception) {
+               exception.printStackTrace();
+           }
+       });
+       // Log.d("Tweet list returned", String.valueOf(tweets));
+       //return tweets;
+   }
+
+   /* private static final NamedLocation[] LIST_LOCATIONS = new NamedLocation[]{
+
+           /* new NamedLocation("Brooklyn Bridge", new LatLng(40.706086, -73.996864),R.drawable.brooklyn_bridge,"typical Brooklyn Bridge photo"),
             new NamedLocation("Times Square", new LatLng(40.7583595, -73.9864889),R.drawable.times_square,null),
             new NamedLocation("Staten Island Ferry", new LatLng(40.6719458, -74.0424948),R.drawable.staten_ferry,null),
             new NamedLocation("Koneko Cat Cafe", new LatLng(40.7204578, -73.9841388),R.drawable.koneko,"Cat Cafes are 10/10"),
             new NamedLocation("Oculus WTC", new LatLng(40.71137299999999, -74.01227299999999),R.drawable.oculus_wtc,null),
             new NamedLocation("Jenna's Apartment", new LatLng(40.763402, -73.963768),0,null),
-            //new NamedLocation("Driftwood Martial Arts", new LatLng(43.42177299999999, -80.55811799999999), 0),
-    };
+            //new NamedLocation("Driftwood Martial Arts", new LatLng(43.42177299999999, -80.55811799999999), 0),*/
+    //};
+    private final ArrayList<NamedLocation> LIST_LOCATIONS(){
+        final ArrayList<NamedLocation> list_locations = new ArrayList<>();
+
+        Log.d("Tweet Location?",String.valueOf(mTweets));
+        for (int i = 0; i<mTweets.size(); i++){
+            if(mTweets.get(i).place != null){
+                        list_locations.add(new NamedLocation(mTweets.get(i).place.name,
+                                new LatLng(getTweetLat(mTweets.get(i)),
+                                        getTweetLong(mTweets.get(i))),
+                                0,
+                                mTweets.get(i).text));
+            }
+        }
+       // Log.d("Made locations list?",String.valueOf(tweetList()));
+        return list_locations;
+    }
 
     private class ScreenResolution {
         int width;
@@ -174,6 +226,11 @@ public class Main extends FragmentActivity implements
         TwitterAuthConfig authConfig = new TwitterAuthConfig(TWITTER_KEY, TWITTER_SECRET);
         Fabric.with(this, new Twitter(authConfig));
         setContentView(R.layout.activity_main);
+
+        // Start loading tweets
+        mTweets = new ArrayList<>();
+        loadTweetList();
+
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
@@ -182,9 +239,12 @@ public class Main extends FragmentActivity implements
 
     @Override
     public void onMapReady(GoogleMap googleMap) {
+        mIsMapReady = true;
         mMap = googleMap;
-        addMarkersToMap();
-        buildTweetList();
+        if (!mTweets.isEmpty()) {
+            addMarkersToMap();
+        }
+
 
         // Setting an info window adapter allows us to change the both the contents and look of the
         // info window.
@@ -204,11 +264,11 @@ public class Main extends FragmentActivity implements
                 @SuppressLint("NewApi") // We check which build version we are using.
                 @Override
                 public void onGlobalLayout() {
-                    // learneds how to make bounds this way from
+                    // learned how to make bounds this way from
                     // https://stackoverflow.com/questions/14636118/android-set-goolgemap-bounds-from-from-database-of-points
                     bounds = new LatLngBounds.Builder();// when map opens, all points are in view
-                    for (int i = 0; i < LIST_LOCATIONS.length; i++) {
-                        bounds.include(LIST_LOCATIONS[i].location);
+                    for (int i = 0; i < LIST_LOCATIONS().size(); i++) {
+                        bounds.include(LIST_LOCATIONS().get(i).location);
                     }
 
                     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN) {
@@ -223,17 +283,16 @@ public class Main extends FragmentActivity implements
     }
 
     private void addMarkersToMap() {
-        for (int i = 0; i < LIST_LOCATIONS.length; i++) {
+        for (int i = 0; i < LIST_LOCATIONS().size(); i++) {
             mMap.addMarker(new MarkerOptions()
-                    .position(LIST_LOCATIONS[i].location)
-                    .title((LIST_LOCATIONS[i].name))
-                    .snippet((LIST_LOCATIONS[i].tweetString))
+                    .position(LIST_LOCATIONS().get(i).location)
+                    .title((LIST_LOCATIONS().get(i).name))
+                    .snippet((LIST_LOCATIONS().get(i).tweetString))
 
             );
         }
     }
-    public void buildTweetList() { // gets a given users tweets and builds an arraylist out of them
-
+    /*private final ArrayList<Tweet> tweets() { // gets a given users tweets and builds an arraylist out of them
         final ArrayList<Tweet> tweets = new ArrayList<>();
         final UserTimeline userTimeline = new UserTimeline.Builder()
                 .screenName("matauro1")
@@ -242,18 +301,14 @@ public class Main extends FragmentActivity implements
             @Override
             public void success(Result<TimelineResult<Tweet>> result) {
                 for(Tweet tweet : result.data.items){
-                    //Log.d("TweetsBITCH", String.valueOf(tweet.coordinates.getLatitude()));
-
                     if(tweet.place != null){
-                        Log.d("Coordinates (lat/lng)",tweet.text + " " + String.valueOf(tweet.place.boundingBox.coordinates.get(0).get(0).get(0)) + ", " +
-                                String.valueOf(tweet.place.boundingBox.coordinates.get(0).get(0).get(1)));//<-- super convuluted way to get coordinates
-                        // in my actual project, i should have a helper function to get  the Lat/Long
+                        Log.d("Coordinates",tweet.place.name+" " +  String.valueOf(getTweetLat(tweet)) + ", " +
+                        String.valueOf(getTweetLong(tweet)));
                     }
                     else{
                         Log.d("Tweet Null"," RIP");
                     }
                     tweets.add(tweet);
-
                 }
             }
             @Override
@@ -261,5 +316,15 @@ public class Main extends FragmentActivity implements
                 exception.printStackTrace();
             }
         });
+        return tweets;
+    }*/
+
+    private static double getTweetLong (Tweet tweet){
+        // be sure to check that tweet.place != null before passing to this function
+        return tweet.place.boundingBox.coordinates.get(0).get(0).get(0);
+    }
+    private static double getTweetLat (Tweet tweet){
+        // be sure to check that tweet.place != null before passing to this function
+        return tweet.place.boundingBox.coordinates.get(0).get(0).get(1);
     }
 }

@@ -53,8 +53,6 @@ public class LoginScreen extends AppCompatActivity {
                 // with your app's user model
                 String msg = "@" + session.getUserName() + " logged in! (#" + session.getUserId() + ")";
                 Toast.makeText(getApplicationContext(), msg, Toast.LENGTH_LONG).show();
-                //buildTweetList();
-               //startActivity(new Intent(this, Main.class));
                startActivity(new Intent(getApplicationContext(),Main.class));
             }
 
