@@ -28,7 +28,7 @@ public class LoginScreen extends AppCompatActivity {
     private static final String TWITTER_KEY= "KxWYzFPPDQMWAvZyvZTV9E1hO ";
     private static final String TWITTER_SECRET = "ZFsoz9V8OO3M2RCNY1UNe7IsIc9vr1ZSvBMAvXmyNAXEyMvCqq";
     private TwitterLoginButton loginButton;
-    DialogFragment installTwitterFragment = new InstallTwitterDialogFragment();
+    DialogFragment installTwitterFragment = new DialogFragmentInstallTwitter();
     /**
      * ATTENTION: This was auto-generated to implement the App Indexing API.
      * See https://g.co/AppIndexing/AndroidStudio for more information.
@@ -55,6 +55,7 @@ public class LoginScreen extends AppCompatActivity {
                 // with your app's user model
                 String msg = "@" + session.getUserName() + " logged in! (#" + session.getUserId() + ")";
                 Toast.makeText(getApplicationContext(), msg, Toast.LENGTH_LONG).show();
+
                startActivity(new Intent(getApplicationContext(),Main.class));
             }
 
@@ -62,7 +63,7 @@ public class LoginScreen extends AppCompatActivity {
             public void failure(TwitterException exception) {
                 //the app won't work if Twitter is not installed on phone,
                 // this will link to Twitter in the app store.
-                installTwitterFragment.show(getSupportFragmentManager(),"Get Twitter Button");
+               // installTwitterFragment.show(getSupportFragmentManager(),"Get Twitter Button");
                 Log.d("TwitterKit", "Login with Twitter failure", exception);
             }
         });

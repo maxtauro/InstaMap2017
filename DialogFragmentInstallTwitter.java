@@ -12,24 +12,24 @@ import android.support.v7.app.AlertDialog;
  * Created by Max on 2017-01-23.
  */
 
-public class InstallTwitterDialogFragment extends DialogFragment {
-    final String appPackageName = "com.twitter.android"; //
+public class DialogFragmentInstallTwitter extends DialogFragment {
+    final String appPackageName = "com.twitter.android";
     @Override
     public Dialog onCreateDialog(Bundle savedInstanceState) {
         // Use the Builder class for convenient dialog construction
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
         builder.setMessage("This app won't work if Twitter is not installed, Get Twitter?")
-                .setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+                .setPositiveButton("Go to Play Store", new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int id) {
                         // this will link to twitter in the google play store
-                        try {
+                        try { //https://stackoverflow.com/questions/11753000/how-to-open-the-google-play-store-directly-from-my-android-application
                             startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=" + appPackageName)));
                         } catch (android.content.ActivityNotFoundException anfe) {
                             startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/details?id=" + appPackageName)));
                         }
                     }
                 })
-                .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                .setNegativeButton("No thanks!", new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int id) {
                         // User cancelled the dialog
                     }

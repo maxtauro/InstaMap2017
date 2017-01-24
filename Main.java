@@ -5,6 +5,7 @@ import android.graphics.Color;
 import android.graphics.Point;
 import android.os.Build;
 import android.os.Bundle;
+import android.support.v4.app.DialogFragment;
 import android.support.v4.app.FragmentActivity;
 import android.text.SpannableString;
 import android.text.style.ForegroundColorSpan;
@@ -51,6 +52,8 @@ public class Main extends FragmentActivity implements
     private ArrayList<Tweet> mTweets;
     private boolean mIsMapReady = false;
     private LatLngBounds.Builder bounds;
+    DialogFragment dialog_noPoints = new DialogFragmentNoPoints();
+
 
     @Override
     public void onInfoWindowClick(Marker marker) {}
@@ -133,7 +136,7 @@ public class Main extends FragmentActivity implements
     public void loadTweetList() { // gets a given users tweets and builds an arraylist out of them
        final ArrayList<Tweet> tweets = new ArrayList<>();
        final UserTimeline userTimeline = new UserTimeline.Builder()
-               .screenName("maxtauro")
+               .screenName("uwaterloo")
                .build();
        userTimeline.next(null, new Callback<TimelineResult<Tweet>>() {
            @Override
@@ -165,8 +168,7 @@ public class Main extends FragmentActivity implements
 
     private final ArrayList<NamedLocation> LIST_LOCATIONS(){
         final ArrayList<NamedLocation> list_locations = new ArrayList<>();
-
-        Log.d("Tweet Location?",String.valueOf(mTweets.get(0).place.boundingBox.coordinates.get(0)));
+        //Log.d("Tweet Location?",String.valueOf(mTweets.get(0).place.boundingBox.coordinates.get(0)));
         for (int i = 0; i<mTweets.size(); i++){
             if(mTweets.get(i).place != null){
                         list_locations.add(new NamedLocation(mTweets.get(i).place.name,
@@ -219,6 +221,7 @@ public class Main extends FragmentActivity implements
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
+
         mapFragment.getMapAsync(this);
     }
 
@@ -260,7 +263,13 @@ public class Main extends FragmentActivity implements
                     } else {
                         mapView.getViewTreeObserver().removeOnGlobalLayoutListener(this);
                     }
-                    mMap.moveCamera(CameraUpdateFactory.newLatLngBounds(bounds.build(), 50));
+                    try { // i think I want to move this try.catch somewhere else, probably somewhere before map is added
+                        mMap.moveCamera(CameraUpdateFactory.newLatLngBounds(bounds.build(), 50));
+                    }
+                    catch(java.lang.IllegalStateException e){
+                        dialog_noPoints.show(getSupportFragmentManager(),"No Points in Tweets");
+                        Log.d("noPoints", ":(");
+                    }
                 }
             });
         }
