@@ -43,6 +43,7 @@ public class Main extends FragmentActivity implements
 
         OnMapReadyCallback, OnInfoWindowClickListener {
 
+    private GoogleMap mMap;
     // Note: Consumer key and secret should be obfuscated in your source code before shipping.
     private static final String TWITTER_KEY = "KxWYzFPPDQMWAvZyvZTV9E1hO";
     private static final String TWITTER_SECRET = "ZFsoz9V8OO3M2RCNY1UNe7IsIc9vr1ZSvBMAvXmyNAXEyMvCqq";
@@ -116,9 +117,6 @@ public class Main extends FragmentActivity implements
     }
 
     private static class NamedLocation {
-    // what NamedLocation is now will essentially be what Tweets are once twitter is included
-    // in the future this will need to be:
-    // NamedLocation (String name, LatLng location, int ImageID, String tweetString, int nlikes, (listof users) retweets)
         public final String name;
         public final LatLng location;
         public final int ImageID;
@@ -135,24 +133,17 @@ public class Main extends FragmentActivity implements
     public void loadTweetList() { // gets a given users tweets and builds an arraylist out of them
        final ArrayList<Tweet> tweets = new ArrayList<>();
        final UserTimeline userTimeline = new UserTimeline.Builder()
-               .screenName("matauro1")
+               .screenName("maxtauro")
                .build();
        userTimeline.next(null, new Callback<TimelineResult<Tweet>>() {
            @Override
            public void success(Result<TimelineResult<Tweet>> result) {
                for(Tweet tweet : result.data.items){
-                   /*if(tweet.place != null){
-                      Log.d("Coordinates",tweet.place.name+" " +  String.valueOf(getTweetLat(tweet)) + ", " +
-                               String.valueOf(getTweetLong(tweet)));
-                   }
-                   else{
-                       Log.d("Tweet Null"," RIP");
-                   }*/
                    tweets.add(tweet);
                }
                mTweets = tweets;
                Log.d("Finished Tweet List", String.valueOf(tweets));
-               if (mIsMapReady) {
+               if (mIsMapReady) {// this is for race condition
                    addMarkersToMap();
                }
            }
@@ -161,24 +152,21 @@ public class Main extends FragmentActivity implements
                exception.printStackTrace();
            }
        });
-       // Log.d("Tweet list returned", String.valueOf(tweets));
-       //return tweets;
    }
 
-   /* private static final NamedLocation[] LIST_LOCATIONS = new NamedLocation[]{
+    private static double getTweetLong (Tweet tweet){
+        // be sure to check that tweet.place != null before passing to this function
+        return tweet.place.boundingBox.coordinates.get(0).get(0).get(0);
+    }
+    private static double getTweetLat (Tweet tweet){
+        // be sure to check that tweet.place != null before passing to this function
+        return tweet.place.boundingBox.coordinates.get(0).get(0).get(1);
+    }
 
-           /* new NamedLocation("Brooklyn Bridge", new LatLng(40.706086, -73.996864),R.drawable.brooklyn_bridge,"typical Brooklyn Bridge photo"),
-            new NamedLocation("Times Square", new LatLng(40.7583595, -73.9864889),R.drawable.times_square,null),
-            new NamedLocation("Staten Island Ferry", new LatLng(40.6719458, -74.0424948),R.drawable.staten_ferry,null),
-            new NamedLocation("Koneko Cat Cafe", new LatLng(40.7204578, -73.9841388),R.drawable.koneko,"Cat Cafes are 10/10"),
-            new NamedLocation("Oculus WTC", new LatLng(40.71137299999999, -74.01227299999999),R.drawable.oculus_wtc,null),
-            new NamedLocation("Jenna's Apartment", new LatLng(40.763402, -73.963768),0,null),
-            //new NamedLocation("Driftwood Martial Arts", new LatLng(43.42177299999999, -80.55811799999999), 0),*/
-    //};
     private final ArrayList<NamedLocation> LIST_LOCATIONS(){
         final ArrayList<NamedLocation> list_locations = new ArrayList<>();
 
-        Log.d("Tweet Location?",String.valueOf(mTweets));
+        Log.d("Tweet Location?",String.valueOf(mTweets.get(0).place.boundingBox.coordinates.get(0)));
         for (int i = 0; i<mTweets.size(); i++){
             if(mTweets.get(i).place != null){
                         list_locations.add(new NamedLocation(mTweets.get(i).place.name,
@@ -188,7 +176,6 @@ public class Main extends FragmentActivity implements
                                 mTweets.get(i).text));
             }
         }
-       // Log.d("Made locations list?",String.valueOf(tweetList()));
         return list_locations;
     }
 
@@ -218,8 +205,6 @@ public class Main extends FragmentActivity implements
         }
     }
 
-    private GoogleMap mMap;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -241,10 +226,9 @@ public class Main extends FragmentActivity implements
     public void onMapReady(GoogleMap googleMap) {
         mIsMapReady = true;
         mMap = googleMap;
-        if (!mTweets.isEmpty()) {
+        if (!mTweets.isEmpty()) { // this is for race condition
             addMarkersToMap();
         }
-
 
         // Setting an info window adapter allows us to change the both the contents and look of the
         // info window.
@@ -291,40 +275,5 @@ public class Main extends FragmentActivity implements
 
             );
         }
-    }
-    /*private final ArrayList<Tweet> tweets() { // gets a given users tweets and builds an arraylist out of them
-        final ArrayList<Tweet> tweets = new ArrayList<>();
-        final UserTimeline userTimeline = new UserTimeline.Builder()
-                .screenName("matauro1")
-                .build();
-        userTimeline.next(null, new Callback<TimelineResult<Tweet>>() {
-            @Override
-            public void success(Result<TimelineResult<Tweet>> result) {
-                for(Tweet tweet : result.data.items){
-                    if(tweet.place != null){
-                        Log.d("Coordinates",tweet.place.name+" " +  String.valueOf(getTweetLat(tweet)) + ", " +
-                        String.valueOf(getTweetLong(tweet)));
-                    }
-                    else{
-                        Log.d("Tweet Null"," RIP");
-                    }
-                    tweets.add(tweet);
-                }
-            }
-            @Override
-            public void failure(TwitterException exception) {
-                exception.printStackTrace();
-            }
-        });
-        return tweets;
-    }*/
-
-    private static double getTweetLong (Tweet tweet){
-        // be sure to check that tweet.place != null before passing to this function
-        return tweet.place.boundingBox.coordinates.get(0).get(0).get(0);
-    }
-    private static double getTweetLat (Tweet tweet){
-        // be sure to check that tweet.place != null before passing to this function
-        return tweet.place.boundingBox.coordinates.get(0).get(0).get(1);
     }
 }

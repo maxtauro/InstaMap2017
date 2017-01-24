@@ -3,6 +3,7 @@ package com.example.max.instamap;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.support.v4.app.DialogFragment;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.widget.Toast;
@@ -27,6 +28,7 @@ public class LoginScreen extends AppCompatActivity {
     private static final String TWITTER_KEY= "KxWYzFPPDQMWAvZyvZTV9E1hO ";
     private static final String TWITTER_SECRET = "ZFsoz9V8OO3M2RCNY1UNe7IsIc9vr1ZSvBMAvXmyNAXEyMvCqq";
     private TwitterLoginButton loginButton;
+    DialogFragment installTwitterFragment = new InstallTwitterDialogFragment();
     /**
      * ATTENTION: This was auto-generated to implement the App Indexing API.
      * See https://g.co/AppIndexing/AndroidStudio for more information.
@@ -58,6 +60,9 @@ public class LoginScreen extends AppCompatActivity {
 
             @Override
             public void failure(TwitterException exception) {
+                //the app won't work if Twitter is not installed on phone,
+                // this will link to Twitter in the app store.
+                installTwitterFragment.show(getSupportFragmentManager(),"Get Twitter Button");
                 Log.d("TwitterKit", "Login with Twitter failure", exception);
             }
         });
