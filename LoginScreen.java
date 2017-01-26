@@ -56,14 +56,14 @@ public class LoginScreen extends AppCompatActivity {
                 String msg = "@" + session.getUserName() + " logged in! (#" + session.getUserId() + ")";
                 Toast.makeText(getApplicationContext(), msg, Toast.LENGTH_LONG).show();
 
-               startActivity(new Intent(getApplicationContext(),Main.class));
+               startActivity(new Intent(getApplicationContext(),PickUserActivity.class));
             }
 
             @Override
             public void failure(TwitterException exception) {
                 //the app won't work if Twitter is not installed on phone,
                 // this will link to Twitter in the app store.
-               // installTwitterFragment.show(getSupportFragmentManager(),"Get Twitter Button");
+                installTwitterFragment.show(getSupportFragmentManager(),"Get Twitter Button");
                 Log.d("TwitterKit", "Login with Twitter failure", exception);
             }
         });

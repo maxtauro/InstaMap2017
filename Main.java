@@ -52,6 +52,7 @@ public class Main extends FragmentActivity implements
     private ArrayList<Tweet> mTweets;
     private boolean mIsMapReady = false;
     private LatLngBounds.Builder bounds;
+    private String twitterUser;
     DialogFragment dialog_noPoints = new DialogFragmentNoPoints();
 
 
@@ -135,9 +136,12 @@ public class Main extends FragmentActivity implements
 
     public void loadTweetList() { // gets a given users tweets and builds an arraylist out of them
        final ArrayList<Tweet> tweets = new ArrayList<>();
+        twitterUser = getIntent().getExtras().getString("TwitterUser");
+
        final UserTimeline userTimeline = new UserTimeline.Builder()
-               .screenName("uwaterloo")
+               .screenName(twitterUser)
                .build();
+        Log.d("twitteruser for Tweet", String.valueOf(twitterUser));
        userTimeline.next(null, new Callback<TimelineResult<Tweet>>() {
            @Override
            public void success(Result<TimelineResult<Tweet>> result) {
