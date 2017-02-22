@@ -1,6 +1,7 @@
 package com.example.max.instamap;
 
 import android.annotation.SuppressLint;
+import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.Point;
 import android.os.Build;
@@ -53,13 +54,14 @@ public class Main extends FragmentActivity implements
     private boolean mIsMapReady = false;
     private LatLngBounds.Builder bounds;
     private String twitterUser;
+    private ArrayList<NamedLocation> LIST_LOCATIONS;
     DialogFragment dialog_noPoints = new DialogFragmentNoPoints();
 
 
     @Override
     public void onInfoWindowClick(Marker marker) {}
 
-    /** Demonstrates customizing the info window and/or its contents. */
+    /**  customizing the info window and/or its contents. */
     class CustomInfoWindowAdapter implements InfoWindowAdapter {
 
         // These are both viewgroups containing an ImageView with id "badge" and two TextViews with id
@@ -69,7 +71,7 @@ public class Main extends FragmentActivity implements
 
         CustomInfoWindowAdapter() {
             mWindow = getLayoutInflater().inflate(R.layout.custom_info_window, null);
-           // mContents = getLayoutInflater().inflate(R.layout.custom_info_contents, null);
+            // mContents = getLayoutInflater().inflate(R.layout.custom_info_contents, null);
         }
 
         @Override
@@ -85,12 +87,12 @@ public class Main extends FragmentActivity implements
 
         private void render(Marker marker, View view) {
             int badge=0;
-           // badge = R.drawable.brooklyn_bridge;
-            for (int i=0;i<LIST_LOCATIONS().size();i++){ // gets the ImageID corresponding to the marker
-                if (marker.getTitle().equals(LIST_LOCATIONS().get(i).name)){ // be sure to use .equals
-                    badge = LIST_LOCATIONS().get(i).ImageID;
+            // badge = R.drawable.brooklyn_bridge;
+            /*for (int i=0;i<LIST_LOCATIONS.size();i++){ // gets the ImageID corresponding to the marker
+                if (marker.getTitle().equals(LIST_LOCATIONS.get(i).name)){ // be sure to use .equals
+                    badge = LIST_LOCATIONS.get(i).ImageID;
                 }
-            }
+            }*/
             ImageView imgView = (ImageView) view.findViewById(R.id.badge);
             imgView.setImageResource(badge);
             ScreenResolution screenRes = deviceDimensions();
@@ -106,7 +108,6 @@ public class Main extends FragmentActivity implements
             } else {
                 titleUi.setText("");
             }
-
             String snippet = marker.getSnippet();
             TextView snippetUi = ((TextView) view.findViewById(R.id.snippet));
             if (snippet != null && snippet.length() > 12) {
@@ -134,32 +135,56 @@ public class Main extends FragmentActivity implements
         }
     }
 
-    public void loadTweetList() { // gets a given users tweets and builds an arraylist out of them
-       final ArrayList<Tweet> tweets = new ArrayList<>();
-        twitterUser = getIntent().getExtras().getString("TwitterUser");
+    public void onNewTwitterUser(String newTwitterUser) {
+        twitterUser = newTwitterUser;  //the activity simply restarts with the new user, need to find a cleaner method of doing this though
+                                        // I want the camera to smoothly animate like the clamping example
+                                        // using this for now since, I am stuck on: java.lang.IllegalStateException: Fragment already added:
+        Intent i = new Intent(this, Main.class);
+        i.putExtra("TwitterUser",twitterUser);
+        startActivity(i);
+        finish();
+        /*twitterUser = newTwitterUser;
+        LIST_LOCATIONS.clear(); // resets the list of locations
+        Log.d("onNewTwitterUser", twitterUser);
 
-       final UserTimeline userTimeline = new UserTimeline.Builder()
-               .screenName(twitterUser)
-               .build();
+        // Start loading tweets
+        mTweets = new ArrayList<>();
+        loadTweetList(twitterUser);
+        LIST_LOCATIONS = buildListLocations(mTweets);
+
+        addMarkersToMap(LIST_LOCATIONS);
+       // clampToTweets(LIST_LOCATIONS);*/
+}
+
+    public void loadTweetList(String twitterUser) { // gets a given users tweets and builds an arraylist out of them
+        final ArrayList<Tweet> tweets = new ArrayList<>();
+        mTweets.clear();
+        //twitterUser = getIntent().getExtras().getString("TwitterUser");
+
+        final UserTimeline userTimeline = new UserTimeline.Builder()
+                .screenName(twitterUser)
+                .build();
         Log.d("twitteruser for Tweet", String.valueOf(twitterUser));
-       userTimeline.next(null, new Callback<TimelineResult<Tweet>>() {
-           @Override
-           public void success(Result<TimelineResult<Tweet>> result) {
-               for(Tweet tweet : result.data.items){
-                   tweets.add(tweet);
-               }
-               mTweets = tweets;
-               Log.d("Finished Tweet List", String.valueOf(tweets));
-               if (mIsMapReady) {// this is for race condition
-                   addMarkersToMap();
-               }
-           }
-           @Override
-           public void failure(TwitterException exception) {
-               exception.printStackTrace();
-           }
-       });
-   }
+        userTimeline.next(null, new Callback<TimelineResult<Tweet>>() {
+            @Override
+            public void success(Result<TimelineResult<Tweet>> result) {
+                for(Tweet tweet : result.data.items){
+                    tweets.add(tweet);
+                }
+                mTweets = tweets;
+                Log.d("Finished Tweet List", String.valueOf(tweets));
+                if (checkReady()) {// this is for race condition
+                    //loadTweetList(twitterUser);
+                    LIST_LOCATIONS = buildListLocations(mTweets);
+                    addMarkersToMap(LIST_LOCATIONS);
+                }
+            }
+            @Override
+            public void failure(TwitterException exception) {
+                exception.printStackTrace();
+            }
+        });
+    }
 
     private static double getTweetLong (Tweet tweet){
         // be sure to check that tweet.place != null before passing to this function
@@ -170,19 +195,79 @@ public class Main extends FragmentActivity implements
         return tweet.place.boundingBox.coordinates.get(0).get(0).get(1);
     }
 
-    private final ArrayList<NamedLocation> LIST_LOCATIONS(){
+    private ArrayList<NamedLocation> buildListLocations(ArrayList<Tweet> tweets){
         final ArrayList<NamedLocation> list_locations = new ArrayList<>();
         //Log.d("Tweet Location?",String.valueOf(mTweets.get(0).place.boundingBox.coordinates.get(0)));
-        for (int i = 0; i<mTweets.size(); i++){
-            if(mTweets.get(i).place != null){
-                        list_locations.add(new NamedLocation(mTweets.get(i).place.name,
-                                new LatLng(getTweetLat(mTweets.get(i)),
-                                        getTweetLong(mTweets.get(i))),
-                                0,
-                                mTweets.get(i).text));
+        for (int i = 0; i<tweets.size(); i++){
+            if(tweets.get(i).place != null){
+                list_locations.add(new NamedLocation(tweets.get(i).place.name,
+                        new LatLng(getTweetLat(tweets.get(i)),
+                                getTweetLong(tweets.get(i))),
+                        0,
+                        tweets.get(i).text));
             }
         }
         return list_locations;
+    }
+
+    private void addMarkersToMap(ArrayList<NamedLocation> _LIST_LOCATIONS) {
+        for (int i = 0; i < _LIST_LOCATIONS.size(); i++) {
+            mMap.addMarker(new MarkerOptions()
+                    .position(_LIST_LOCATIONS.get(i).location)
+                    .title((_LIST_LOCATIONS.get(i).name))
+                    .snippet((_LIST_LOCATIONS.get(i).tweetString))
+            );
+        }
+        clampToTweets(_LIST_LOCATIONS);
+    }
+
+    private LatLngBounds buildMapBounds(ArrayList<NamedLocation> _LIST_LOCATIONS){
+        // learned how to make bounds this way from
+        // https://stackoverflow.com/questions/14636118/android-set-goolgemap-bounds-from-from-database-of-points
+        //  final LatLngBounds.Builder bounds= new LatLngBounds.Builder();// when map opens, all points are in view
+        final LatLngBounds.Builder _bounds= new LatLngBounds.Builder();
+        for (int i = 0; i < _LIST_LOCATIONS.size(); i++) {
+            Log.d("List locations at",String.valueOf(_LIST_LOCATIONS.get(i).location));
+            _bounds.include(_LIST_LOCATIONS.get(i).location);
+        }
+        Log.d("Returning Bounds",String.valueOf(bounds));
+            return _bounds.build();
+    }
+
+
+    public void clampToTweets(ArrayList<NamedLocation> _LIST_LOCATIONS) {
+        if (!checkReady() || _LIST_LOCATIONS.isEmpty()) {
+            Log.d("Gonna show dialog","");
+            dialog_noPoints.show(getSupportFragmentManager(), "No Points in Tweets");
+            return;
+        }
+        final LatLngBounds clampBounds = buildMapBounds(_LIST_LOCATIONS);
+        final View mapView = getSupportFragmentManager().findFragmentById(R.id.map).getView();
+        if (mapView.getViewTreeObserver().isAlive()) {
+            mapView.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+                @SuppressWarnings("deprecation") // We use the new method when supported
+                @SuppressLint("NewApi") // We check which build version we are using.
+                @Override
+                public void onGlobalLayout() {
+                    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN) {
+                        mapView.getViewTreeObserver().removeGlobalOnLayoutListener(this);
+                    } else {
+                        mapView.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+                    }
+                    try { // i think I want to move this try.catch somewhere else, probably somewhere before map is added
+                        mMap.setLatLngBoundsForCameraTarget(clampBounds);
+                        mMap.animateCamera(CameraUpdateFactory.newLatLngBounds(clampBounds, 50));
+                    } catch (java.lang.IllegalStateException e) {
+                        Log.d("noPoints", twitterUser);
+                        //dialog_noPoints.show(getSupportFragmentManager(), "No Points in Tweets");
+                        /*if(!mDialogAdded) {
+                            Log.d("noPoints", twitterUser);
+                            dialog_noPoints.show(getSupportFragmentManager(), "No Points in Tweets");
+                        }
+                        mDialogAdded = true;*/
+                    }
+                }
+            });}
     }
 
     private class ScreenResolution {
@@ -211,6 +296,18 @@ public class Main extends FragmentActivity implements
         }
     }
 
+    /**
+     * Before the map is ready many calls will fail.
+     * This should be called on all entry points that call methods on the Google Maps API.
+     */
+    private boolean checkReady() {
+        if (mMap == null) {
+            //Toast.makeText(this, R.string.map_not_ready, Toast.LENGTH_SHORT).show();
+            return false;
+        }
+        return true;
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -220,7 +317,9 @@ public class Main extends FragmentActivity implements
 
         // Start loading tweets
         mTweets = new ArrayList<>();
-        loadTweetList();
+        twitterUser = getIntent().getExtras().getString("TwitterUser");
+        loadTweetList(twitterUser);
+        LIST_LOCATIONS = buildListLocations(mTweets);
 
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
@@ -231,62 +330,24 @@ public class Main extends FragmentActivity implements
 
     @Override
     public void onMapReady(GoogleMap googleMap) {
-        mIsMapReady = true;
+        //mIsMapReady = true;  <-- don't need this anymore, use checkReady() instead
         mMap = googleMap;
-        if (!mTweets.isEmpty()) { // this is for race condition
-            addMarkersToMap();
-        }
-
+        if (!LIST_LOCATIONS.isEmpty()) { // this is for race condition
+            addMarkersToMap(LIST_LOCATIONS);
+            //moveMap(buildMapBounds(LIST_LOCATIONS()));
+       }
         // Setting an info window adapter allows us to change the both the contents and look of the
         // info window.
         mMap.setInfoWindowAdapter(new CustomInfoWindowAdapter());
-
-        /*// Set listeners for marker events.  See the bottom of this class for their behavior.
+        //moveMap();
+       /*// Set listeners for marker events.  See the bottom of this class for their behavior.
         mMap.setOnMarkerClickListener(this);
         mMap.setOnInfoWindowClickListener(this);
         mMap.setOnMarkerDragListener(this);
         mMap.setOnInfoWindowCloseListener(this);
         mMap.setOnInfoWindowLongClickListener(this);*/
 
-        final View mapView = getSupportFragmentManager().findFragmentById(R.id.map).getView();
-        if (mapView.getViewTreeObserver().isAlive()) {
-            mapView.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
-                @SuppressWarnings("deprecation") // We use the new method when supported
-                @SuppressLint("NewApi") // We check which build version we are using.
-                @Override
-                public void onGlobalLayout() {
-                    // learned how to make bounds this way from
-                    // https://stackoverflow.com/questions/14636118/android-set-goolgemap-bounds-from-from-database-of-points
-                    bounds = new LatLngBounds.Builder();// when map opens, all points are in view
-                    for (int i = 0; i < LIST_LOCATIONS().size(); i++) {
-                        bounds.include(LIST_LOCATIONS().get(i).location);
-                    }
-
-                    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN) {
-                        mapView.getViewTreeObserver().removeGlobalOnLayoutListener(this);
-                    } else {
-                        mapView.getViewTreeObserver().removeOnGlobalLayoutListener(this);
-                    }
-                    try { // i think I want to move this try.catch somewhere else, probably somewhere before map is added
-                        mMap.moveCamera(CameraUpdateFactory.newLatLngBounds(bounds.build(), 50));
-                    }
-                    catch(java.lang.IllegalStateException e){
-                        dialog_noPoints.show(getSupportFragmentManager(),"No Points in Tweets");
-                        Log.d("noPoints", ":(");
-                    }
-                }
-            });
-        }
     }
 
-    private void addMarkersToMap() {
-        for (int i = 0; i < LIST_LOCATIONS().size(); i++) {
-            mMap.addMarker(new MarkerOptions()
-                    .position(LIST_LOCATIONS().get(i).location)
-                    .title((LIST_LOCATIONS().get(i).name))
-                    .snippet((LIST_LOCATIONS().get(i).tweetString))
 
-            );
-        }
-    }
 }

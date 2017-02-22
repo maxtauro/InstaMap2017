@@ -86,7 +86,7 @@ public class PickUserActivity extends AppCompatActivity {
 
                 // TODO: Implement successful signup logic here
 
-                startActivity(new Intent(getApplicationContext(),Main.class));
+                //startActivity(new Intent(getApplicationContext(),Main.class));
             }
         }
     }
