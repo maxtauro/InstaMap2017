@@ -2,20 +2,17 @@ package com.example.max.instamap;
 
 import android.annotation.SuppressLint;
 import android.content.Intent;
-import android.graphics.Color;
 import android.graphics.Point;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.app.FragmentActivity;
-import android.text.SpannableString;
-import android.text.style.ForegroundColorSpan;
 import android.util.Log;
 import android.view.Display;
+import android.view.Gravity;
 import android.view.View;
 import android.view.ViewTreeObserver;
-import android.widget.ImageView;
-import android.widget.TextView;
+import android.widget.FrameLayout;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -34,6 +31,7 @@ import com.twitter.sdk.android.core.TwitterAuthConfig;
 import com.twitter.sdk.android.core.TwitterException;
 import com.twitter.sdk.android.core.models.Tweet;
 import com.twitter.sdk.android.tweetui.TimelineResult;
+import com.twitter.sdk.android.tweetui.TweetView;
 import com.twitter.sdk.android.tweetui.UserTimeline;
 
 import java.util.ArrayList;
@@ -58,6 +56,7 @@ public class Main extends FragmentActivity implements
     DialogFragment dialog_noPoints = new DialogFragmentNoPoints();
 
 
+
     @Override
     public void onInfoWindowClick(Marker marker) {}
 
@@ -71,12 +70,23 @@ public class Main extends FragmentActivity implements
 
         CustomInfoWindowAdapter() {
             mWindow = getLayoutInflater().inflate(R.layout.custom_info_window, null);
+
             // mContents = getLayoutInflater().inflate(R.layout.custom_info_contents, null);
         }
 
         @Override
         public View getInfoWindow(Marker marker) {
-            render(marker, mWindow);
+            final FrameLayout tweet_window = (FrameLayout) mWindow;
+            tweet_window.removeAllViews();
+            tweet_window.addView(new TweetView(Main.this, mTweets.get(Integer.parseInt(marker.getSnippet())+1)));
+            ScreenResolution screenRes = deviceDimensions();
+            FrameLayout.LayoutParams params =(FrameLayout.LayoutParams) tweet_window.getLayoutParams(); ;
+            params.setMargins(screenRes.width/2, screenRes.height/2, 0, 0);
+            params.gravity = Gravity.NO_GRAVITY;
+            tweet_window.setLayoutParams(params);
+            render(marker, tweet_window);
+           // custom_info_window.removeAllViews(); <-- I think the key to figuring this out is where i put this line
+             //
             return mWindow;
         }
 
@@ -86,39 +96,9 @@ public class Main extends FragmentActivity implements
         }
 
         private void render(Marker marker, View view) {
-            int badge=0;
-            // badge = R.drawable.brooklyn_bridge;
-            /*for (int i=0;i<LIST_LOCATIONS.size();i++){ // gets the ImageID corresponding to the marker
-                if (marker.getTitle().equals(LIST_LOCATIONS.get(i).name)){ // be sure to use .equals
-                    badge = LIST_LOCATIONS.get(i).ImageID;
-                }
-            }*/
-            ImageView imgView = (ImageView) view.findViewById(R.id.badge);
-            imgView.setImageResource(badge);
             ScreenResolution screenRes = deviceDimensions();
-            imgView.getLayoutParams().width = (screenRes.width)/3;
-            //((ImageView) view.findViewById(R.id.badge)).setImageResource(badge);  this works
-            String title = marker.getTitle();
-            TextView titleUi = ((TextView) view.findViewById(R.id.title));
-            if (title != null) {
-                // Spannable string allows us to edit the formatting of the text.
-                SpannableString titleText = new SpannableString(title);
-                titleText.setSpan(new ForegroundColorSpan(Color.RED), 0, titleText.length(), 0);
-                titleUi.setText(titleText);
-            } else {
-                titleUi.setText("");
-            }
-            String snippet = marker.getSnippet();
-            TextView snippetUi = ((TextView) view.findViewById(R.id.snippet));
-            if (snippet != null && snippet.length() > 12) {
-                SpannableString snippetText = new SpannableString(snippet);
-                snippetText.setSpan(new ForegroundColorSpan(Color.MAGENTA), 0, 10, 0);
-                snippetText.setSpan(new ForegroundColorSpan(Color.BLUE), 12, snippet.length(), 0);
-                snippetUi.setText(snippetText);
-            } else {
-                snippetUi.setText("");
-            }
-        }
+            Log.d("SWAG FAM", String.valueOf(view));
+       }
     }
 
     private static class NamedLocation {
@@ -126,13 +106,20 @@ public class Main extends FragmentActivity implements
         public final LatLng location;
         public final int ImageID;
         public final String tweetString;
+        public final long tweetID;
 
-        NamedLocation(String name, LatLng location, int ImageID, String tweetString) {
+        NamedLocation(String name, LatLng location, int ImageID, String tweetString, long tweetID) {
             this.name = name;
             this.location = location;
             this.ImageID = ImageID;// if there is no picture ImageID will be 0,
             this.tweetString = tweetString;
+            this.tweetID = tweetID;
         }
+    }
+
+    public void getTweetID(String tweetName){
+       // if mTweets !=
+       // return null;
     }
 
     public void onNewTwitterUser(String newTwitterUser) {
@@ -204,19 +191,29 @@ public class Main extends FragmentActivity implements
                         new LatLng(getTweetLat(tweets.get(i)),
                                 getTweetLong(tweets.get(i))),
                         0,
-                        tweets.get(i).text));
+                        tweets.get(i).text,
+                        tweets.get(i).id
+                        ));
             }
         }
         return list_locations;
     }
 
     private void addMarkersToMap(ArrayList<NamedLocation> _LIST_LOCATIONS) {
+        long tweetId;
+        Marker mMarker;
         for (int i = 0; i < _LIST_LOCATIONS.size(); i++) {
-            mMap.addMarker(new MarkerOptions()
+            tweetId = _LIST_LOCATIONS.get(i).tweetID;
+            Log.d("TweetID",String.valueOf(tweetId));
+            mMarker = mMap.addMarker(new MarkerOptions()
                     .position(_LIST_LOCATIONS.get(i).location)
                     .title((_LIST_LOCATIONS.get(i).name))
-                    .snippet((_LIST_LOCATIONS.get(i).tweetString))
+                    .snippet(String.valueOf(i))
+
             );
+            mMarker.setTag(_LIST_LOCATIONS.get(i));
+
+
         }
         clampToTweets(_LIST_LOCATIONS);
     }
